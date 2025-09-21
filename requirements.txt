@@ -1,0 +1,38 @@
+# Core ML frameworks
+torch>=2.0.0
+torchvision>=0.15.0
+scikit-learn>=1.2.0
+
+# Data manipulation and analysis
+pandas>=1.5.0
+numpy>=1.23.0
+openpyxl>=3.0.0  # Para Excel files
+scipy>=1.10.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.14.0
+yellowbrick>=1.5.0
+
+# Jupyter and interactive environment
+jupyter>=1.0.0
+ipython>=8.0.0
+ipywidgets>=8.0.0
+
+# Utilities
+joblib>=1.2.0
+tqdm>=4.65.0
+
+# AutoML - LAZYPredict
+lazypredict>=0.2.12
+lightgbm>=3.3.0
+xgboost>=1.7.0
+catboost>=1.2.0
+
+# AutoML - PyCaret (dependências completas)
+pycaret>=3.0.0
+shap>=0.41.0
+interpret>=0.2.0
+optuna>=3.2.0
+hyperopt>=0.2.0
