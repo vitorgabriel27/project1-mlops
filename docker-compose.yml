@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  streamlit-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: streamlit-mlops
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    command: >
+      poetry run streamlit run streamlit/app.py --server.port=8501 --server.address=0.0.0.0 --server.headless=true --server.runOnSave=true  # Hot reload ao salvar arquivos
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:8501/_stcore/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
