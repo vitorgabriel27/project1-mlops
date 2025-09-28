@@ -1,0 +1,73 @@
+AIRBNB RIO DE JANEIRO - DATA PROCESSING SUMMARY
+==================================================
+
+Processing date: 2025-09-28 12:58:28
+Original dataset: listings.csv
+Final dataset: airbnb_rio_cleaned_20250928_125828.csv
+
+DATASET STATISTICS:
+Total rows: 21372
+Total columns: 16
+
+COLUMNS INCLUDED:
+- accommodates (int64)
+- neighbourhood_cleansed (object)
+- latitude (float64)
+- longitude (float64)
+- bathrooms (float64)
+- bedrooms (float64)
+- beds (float64)
+- minimum_nights (int64)
+- maximum_nights (int64)
+- number_of_reviews (int64)
+- price (float64)
+- room_type (object)
+- dist_to_cristo_km (float64)
+- price_per_person (float64)
+- price_category (category)
+- log_price (float64)
+
+NUMERIC COLUMNS SUMMARY:
+- accommodates: min=1.00, max=9.00, mean=3.49
+- latitude: min=-23.03, max=-22.91, mean=-22.97
+- longitude: min=-43.47, max=-43.16, mean=-43.23
+- bathrooms: min=0.00, max=3.50, mean=1.29
+- bedrooms: min=0.00, max=3.00, mean=1.32
+- beds: min=0.00, max=6.00, mean=1.97
+- minimum_nights: min=1.00, max=6.00, mean=2.29
+- maximum_nights: min=1.00, max=750.00, mean=214.74
+- number_of_reviews: min=0.00, max=63.00, mean=11.89
+- price: min=44.00, max=1170.00, mean=391.36
+- dist_to_cristo_km: min=0.73, max=28.38, mean=7.03
+- price_per_person: min=8.75, max=1080.00, mean=124.04
+- log_price: min=3.81, max=7.07, mean=5.80
+
+CATEGORICAL COLUMNS SUMMARY:
+- neighbourhood_cleansed: 56 unique values
+- room_type: 4 unique values
+- price_category: 6 unique values
+
+PRICE STATISTICS (BRL):
+Minimum price: R$ 44.00
+Maximum price: R$ 1170.00
+Average price: R$ 391.36
+Median price: R$ 320.00
+Standard deviation: R$ 233.86
+
+NEIGHBOURHOOD DISTRIBUTION:
+- Copacabana: 7448 listings
+- Barra da Tijuca: 1934 listings
+- Ipanema: 1693 listings
+- Centro: 1064 listings
+- Jacarepaguá: 1044 listings
+- Botafogo: 1038 listings
+- Leblon: 898 listings
+- Santa Teresa: 856 listings
+- Recreio dos Bandeirantes: 638 listings
+- Flamengo: 560 listings
+
+ROOM TYPE DISTRIBUTION:
+- Entire home/apt: 16665 listings
+- Private room: 4559 listings
+- Shared room: 146 listings
+- Hotel room: 2 listings
