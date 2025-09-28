@@ -279,7 +279,9 @@ class ModelTrainingApp:
                     batch_size=config['batch_size'],
                     random_state=42,
                     normalization=config.get('normalization', 'standard'),
-                    optimizer_name=config.get('optimizer', 'adam')
+                    optimizer_name=config.get('optimizer', 'adam'),
+                    enable_early_stopping=config.get('enable_early_stopping', False),
+                    patience=config.get('patience', 5)
                 )
                 progress_bar.progress(10)
                 
