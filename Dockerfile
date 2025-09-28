@@ -18,9 +18,11 @@ RUN curl -sSL https://install.python-poetry.org | python3 - && \
 # 4. Copie apenas arquivos de dependência primeiro para aproveitar cache do Docker
 COPY pyproject.toml poetry.lock* ./
 
-# 5. Instale as dependências (sem ambiente virtual)
+# 5. Instale as dependências com Poetry (sem venv) + torch via pip
 RUN poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi
+    poetry install --no-interaction --no-ansi && \
+    pip install torch==2.1.0+cu118 torchvision==0.16.0+cu118 \
+    -f https://download.pytorch.org/whl/torch_stable.html
 
 # 6. Copie o restante do código
 COPY . .
