@@ -47,18 +47,14 @@ class MyModel(Architecture):
             
             # Verificar se o DataFrame tem colunas necessárias
             required_columns = ['accommodates', 'bedrooms', 'bathrooms', 'beds', 
-                              'neighbourhood_cleansed', 'room_type', 'price',
-                              'minimum_nights', 'maximum_nights', 'number_of_reviews',
-                              'latitude', 'longitude']
+                              'neighbourhood_cleansed', 'room_type', 'price']
             
             missing_columns = [col for col in required_columns if col not in df.columns]
             if missing_columns:
                 raise ValueError(f"Colunas faltantes: {missing_columns}")
             
             # 1. Separar features e target
-            numeric_features = ['accommodates', 'bathrooms', 'bedrooms', 'beds', 
-                               'minimum_nights', 'maximum_nights', 'number_of_reviews',
-                               'latitude', 'longitude']
+            numeric_features = ['accommodates', 'bathrooms', 'bedrooms', 'beds']
             
             categorical_features = ['neighbourhood_cleansed', 'room_type']
             
