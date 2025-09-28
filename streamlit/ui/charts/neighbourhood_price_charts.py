@@ -97,17 +97,5 @@ class NeighbourhoodPricePlotter(Plotter):
         
         st.subheader("📈 Estatísticas Comparativas por Bairro")
         st.dataframe(stats_by_neighbourhood, use_container_width=True)
-        
-        # Heatmap de correlação entre variáveis
-        numeric_cols = ['price', 'bedrooms', 'accommodates', 'bathrooms']
-        correlation_matrix = df[numeric_cols].corr()
-        
-        fig = px.imshow(
-            correlation_matrix,
-            title="Matriz de Correlação entre Variáveis Numéricas",
-            color_continuous_scale="RdBu",
-            aspect="auto"
-        )
-        
-        st.plotly_chart(fig, use_container_width=True)
+    
 

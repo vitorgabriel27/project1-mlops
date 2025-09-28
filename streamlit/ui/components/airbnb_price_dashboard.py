@@ -18,7 +18,6 @@ class AirbnbPriceDashboard:
     
     def render_dashboard(self):
         """Renderiza o dashboard completo"""
-        st.title("🏠 Airbnb Rio de Janeiro - Análise de Preços")
         
         # Sidebar com filtros
         st.sidebar.header("Filtros")
