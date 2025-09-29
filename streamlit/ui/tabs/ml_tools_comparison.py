@@ -1,7 +1,7 @@
 import streamlit as st
 import plotly.express as px
 import plotly.graph_objects as go
-from ml.models.lazy_predict_model import LazyModelComparator
+from ml.models.lazy_predict_model import LazyPredictModel
 from ml.models.pycaret_model import PyCaretModel
 
 class MLToolsComparisonTab:
@@ -74,6 +74,7 @@ class MLToolsComparisonTab:
     def run_tools_comparison(self, test_size, n_models):
         """Executa a comparação entre as ferramentas de AutoML"""
         st.subheader("🚀 Executando Ferramentas de AutoML")
+
         input_data = {
             'neighbourhood_cleansed': st.selectbox('Bairro', self.df['neighbourhood_cleansed'].unique()),
             'room_type': st.selectbox('Tipo do quarto', self.df['room_type'].unique()),
@@ -82,20 +83,46 @@ class MLToolsComparisonTab:
             'bedrooms': st.number_input('Quartos', min_value=0, max_value=5, value=1),
             'beds': st.number_input('Camas', min_value=0, max_value=5, value=1),
         }
-        if st.button('Prever preço'):
-            pred_df = PyCaretModel.predict(input_data)
-            predicted_value = float(pred_df['prediction_label'].iloc[0])
-            
-            r2, rmse, mae = PyCaretModel.evaluate_predictions(pred_df)
 
-            st.metric("Preço Previsto (PyCaret)", f"R$ {predicted_value:.2f}")
-            
-            if r2 is not None:
-                st.write(f"R²: {r2:.3f}")
-                st.write(f"RMSE: {rmse:.2f}")
-                st.write(f"MAE: {mae:.2f}")
-            else:
-                st.write("Não foi possível calcular métricas (valores reais não fornecidos).")
+        if st.button('Prever preço'):
+            col1, col2 = st.columns(2)
+
+            # ----------- PYCARET -----------
+            with col1:
+                st.markdown("### 🧠 PyCaret")
+                try:
+                    pred_df = PyCaretModel.predict(input_data)
+                    predicted_value = float(pred_df['prediction_label'].iloc[0])
+                    r2, rmse, mae = PyCaretModel.evaluate_predictions(pred_df)
+
+                    st.metric("Preço Previsto", f"R$ {predicted_value:.2f}")
+                    if r2 is not None:
+                        st.write(f"**R²**: {r2:.3f}")
+                        st.write(f"**RMSE**: {rmse:.2f}")
+                        st.write(f"**MAE**: {mae:.2f}")
+                    else:
+                        st.write("⚠️ Métricas indisponíveis (sem valores reais).")
+                except Exception as e:
+                    st.error(f"Erro PyCaret: {e}")
+
+            with col2:
+                st.markdown("### 🐢 LazyPredict")
+                try:
+                    # Previsão via modelo ONNX + pré-processador
+                    lazy_pred, lazy_r2, lazy_rmse, lazy_mae = LazyPredictModel.predict_onnx(
+                        input_data,
+                        model_path="lazy_model.onnx",
+                        preprocessor_path="preprocessor.pkl"
+                    )
+
+                    st.metric("Preço Previsto", f"R$ {lazy_pred:.2f}")
+                    st.write(f"**R²**: {lazy_r2:.3f}")
+                    st.write(f"**RMSE**: {lazy_rmse:.2f}")
+                    st.write(f"**MAE**: {lazy_mae:.2f}")
+                except Exception as e:
+                    st.error(f"Erro LazyPredict (ONNX): {e}")
+
+
 
 
         
