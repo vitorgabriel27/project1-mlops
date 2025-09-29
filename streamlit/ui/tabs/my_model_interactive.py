@@ -352,18 +352,6 @@ class ModelTrainingApp:
                 st.write(f"- Dropout: {config.get('dropout_rate', 'N/A')}")
                 st.write(f"- Normalização: {config.get('normalization', 'N/A')}")
                 st.write(f"- Early Stopping: {'Sim' if config.get('enable_early_stopping', False) else 'Não'}")
-            
-            # Estatísticas do dataset
-            st.subheader("📁 Estatísticas do Dataset")
-            data_col1, data_col2, data_col3 = st.columns(3)
-            with data_col1:
-                st.metric("Total de Amostras", len(self.df))
-            with data_col2:
-                if 'price' in self.df.columns:
-                    st.metric("Preço Médio", f"R$ {self.df['price'].mean():.2f}")
-            with data_col3:
-                if 'price' in self.df.columns:
-                    st.metric("Preço Máximo", f"R$ {self.df['price'].max():.2f}")
         
         else:
             st.warning("Nenhum resultado de treinamento disponível.")

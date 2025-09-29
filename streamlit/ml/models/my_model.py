@@ -335,29 +335,52 @@ class MyModel(Architecture):
 
 
 
-    def predict_dataframe(self, df):
-        """Fazer previsões para DataFrame"""
+    def predict_dataframe(self, df, preprocessor=None):
+        """
+        Faz previsões reais em um DataFrame usando um modelo treinado.
+
+        Parâmetros:
+            df: DataFrame de entrada com as features necessárias
+            model: modelo treinado (PyCaret, sklearn, ONNX, etc.)
+            preprocessor: (opcional) pipeline de pré-processamento se necessário
+
+        Retorna:
+            DataFrame com colunas: predicted_price, prediction_error, error_percentage
+        """
         try:
-            # Simular previsões para demonstração
-            base_price = 200.0
-            predictions = base_price + np.random.normal(0, 50, len(df))
-            
+            input_df = df.copy()
+
+            # Aplicar pré-processamento se houver
+            if preprocessor is not None:
+                X = preprocessor.transform(input_df)
+            else:
+                X = input_df
+
+            # Fazer predição
+            if hasattr(self.model, "predict"):
+                print('has predict')
+                predictions = self.model.predict(X)
+            else:
+                raise ValueError("O modelo fornecido não possui método 'predict'.")
+
+            # Resultado com previsões
             result_df = df.copy()
             result_df['predicted_price'] = predictions
+
+            # Cálculo de erro (se coluna real estiver disponível)
             if 'price' in df.columns:
-                result_df['prediction_error'] = result_df['price'] - predictions
+                result_df['prediction_error'] = result_df['price'] - result_df['predicted_price']
                 result_df['error_percentage'] = (result_df['prediction_error'] / result_df['price']) * 100
             else:
-                result_df['prediction_error'] = 0
-                result_df['error_percentage'] = 0
-                
+                result_df['prediction_error'] = np.nan
+                result_df['error_percentage'] = np.nan
+
             return result_df
-            
+
         except Exception as e:
             print(f"❌ Erro na predição: {e}")
-            # Fallback: retornar DataFrame original com colunas de erro
             result_df = df.copy()
-            result_df['predicted_price'] = 200.0
-            result_df['prediction_error'] = 0
-            result_df['error_percentage'] = 0
+            result_df['predicted_price'] = np.nan
+            result_df['prediction_error'] = np.nan
+            result_df['error_percentage'] = np.nan
             return result_df

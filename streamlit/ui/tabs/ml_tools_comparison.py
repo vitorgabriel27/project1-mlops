@@ -34,18 +34,17 @@ class MLToolsComparisonTab:
             n_models = st.slider("Número de modelos a comparar", 5, 20, 10)
         
         # Execução das ferramentas
-        tab1, tab2, tab3 = st.tabs(["🚀 Executar Ferramentas", "📊 Comparação de Resultados", "🔮 Previsões Comparativas"])
+        # tab1, tab2, tab3 = st.tabs(["🚀 Executar Ferramentas", "📊 Comparação de Resultados", "🔮 Previsões Comparativas"])
         
-        with tab1:
-            self.run_tools_comparison(test_size, n_models)
+        st.title("🚀 Executar Ferramentas de AutoML")
+        self.run_tools_comparison(test_size, n_models)
         
-        with tab2:
-            st.header("📊 Resultados da Comparação")
-            st.text("Em breve: Visualização comparativa dos resultados obtidos pelas ferramentas.")
+        # with tab2:
+        #     st.header("📊 Resultados da Comparação")
             
-        with tab3:
-            st.header("🔮 Previsões Comparativas")
-            st.text("Em breve: Interface para inserir dados e comparar previsões entre os modelos.")
+        # with tab3:
+        #     st.header("🔮 Previsões Comparativas")
+        #     st.text("Em breve: Interface para inserir dados e comparar previsões entre os modelos.")
 
     def show_dataset_info(self):
         """Mostrar informações sobre o dataset"""
@@ -73,8 +72,6 @@ class MLToolsComparisonTab:
 
     def run_tools_comparison(self, test_size, n_models):
         """Executa a comparação entre as ferramentas de AutoML"""
-        st.subheader("🚀 Executando Ferramentas de AutoML")
-
         input_data = {
             'neighbourhood_cleansed': st.selectbox('Bairro', self.df['neighbourhood_cleansed'].unique()),
             'room_type': st.selectbox('Tipo do quarto', self.df['room_type'].unique()),
@@ -92,6 +89,7 @@ class MLToolsComparisonTab:
                 st.markdown("### 🧠 PyCaret")
                 try:
                     pred_df = PyCaretModel.predict(input_data)
+                    print(pred_df)
                     predicted_value = float(pred_df['prediction_label'].iloc[0])
                     r2, rmse, mae = PyCaretModel.evaluate_predictions(pred_df)
 
@@ -102,6 +100,11 @@ class MLToolsComparisonTab:
                         st.write(f"**MAE**: {mae:.2f}")
                     else:
                         st.write("⚠️ Métricas indisponíveis (sem valores reais).")
+
+                    scatter, hist, line = PyCaretModel.plot_metrics(pred_df)
+                    st.altair_chart(scatter, use_container_width=True)
+                    st.altair_chart(hist, use_container_width=True)
+                    st.altair_chart(line, use_container_width=True)
                 except Exception as e:
                     st.error(f"Erro PyCaret: {e}")
 
@@ -121,16 +124,3 @@ class MLToolsComparisonTab:
                     st.write(f"**MAE**: {lazy_mae:.2f}")
                 except Exception as e:
                     st.error(f"Erro LazyPredict (ONNX): {e}")
-
-
-
-
-        
-        
-   
-        
-
-
-
-    
-   
