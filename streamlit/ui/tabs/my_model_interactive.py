@@ -40,7 +40,7 @@ class ModelTrainingApp:
 
         st.session_state.setdefault('data_loaded', bool(len(self.df) > 0))
         st.session_state.setdefault('model_trained', False)
-        st.session_state.setdefault('section', "📊 Carregar Dados")
+        st.session_state.setdefault('section', "⚙️ Configurar Modelo")
         st.session_state.setdefault('current_model', None)
         st.session_state.setdefault('current_metrics', None)
         st.session_state.setdefault('current_training_history', None)
@@ -55,8 +55,8 @@ class ModelTrainingApp:
         st.sidebar.title("Navegação")
         section = st.sidebar.selectbox(
             "Seções:",
-            ["📊 Carregar Dados", "⚙️ Configurar Modelo", "🚀 Treinar Modelo", "🔮 Fazer Previsões", "🔬 Comparativo entre Modelos"],
-            index=["📊 Carregar Dados", "⚙️ Configurar Modelo", "🚀 Treinar Modelo", "🔮 Fazer Previsões", "🔬 Comparativo entre Modelos"].index(st.session_state.section)
+            ["⚙️ Configurar Modelo", "🚀 Treinar Modelo", "🔮 Fazer Previsões", "🔬 Comparativo entre Modelos"],
+            index=["⚙️ Configurar Modelo", "🚀 Treinar Modelo", "🔮 Fazer Previsões", "🔬 Comparativo entre Modelos"].index(st.session_state.section)
         )
         st.session_state.section = section
 
@@ -74,9 +74,7 @@ class ModelTrainingApp:
         self.render_sidebar()
         section = st.session_state.section
 
-        if section == "📊 Carregar Dados":
-            self.load_data_section()
-        elif section == "⚙️ Configurar Modelo":
+        if section == "⚙️ Configurar Modelo":
             self.model_config_section()
         elif section == "🚀 Treinar Modelo":
             self.train_model_section()
@@ -84,20 +82,6 @@ class ModelTrainingApp:
             self.prediction_section()
         elif section == "🔬 Comparativo entre Modelos":
             self.ml_tools_comparison_tab()
-            
-
-    # ------------------------------
-    # Seção de Carregamento de Dados
-    # ------------------------------
-    def load_data_section(self):
-        st.header("📊 Carregamento de Dados")
-        if st.session_state.data_loaded:
-            st.dataframe(self.df.head())
-            st.metric("Total de Listings", len(self.df))
-            if 'price' in self.df.columns:
-                st.metric("Preço Médio", f"R$ {self.df['price'].mean():.2f}")
-        else:
-            st.warning("Nenhum dado carregado.")
 
     # ------------------------------
     # Seção de Configuração de Modelo
