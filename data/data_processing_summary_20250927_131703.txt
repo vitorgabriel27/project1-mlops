@@ -1,0 +1,73 @@
+AIRBNB RIO DE JANEIRO - DATA PROCESSING SUMMARY
+==================================================
+
+Processing date: 2025-09-27 13:17:03
+Original dataset: listings.csv
+Final dataset: airbnb_rio_cleaned_20250927_131703.csv
+
+DATASET STATISTICS:
+Total rows: 21966
+Total columns: 16
+
+COLUMNS INCLUDED:
+- accommodates (int64)
+- neighbourhood_cleansed (object)
+- latitude (float64)
+- longitude (float64)
+- bathrooms (float64)
+- bedrooms (float64)
+- beds (float64)
+- minimum_nights (int64)
+- maximum_nights (int64)
+- number_of_reviews (int64)
+- price (float64)
+- room_type (object)
+- dist_to_cristo_km (float64)
+- price_per_person (float64)
+- price_category (category)
+- log_price (float64)
+
+NUMERIC COLUMNS SUMMARY:
+- accommodates: min=1.00, max=9.00, mean=3.50
+- latitude: min=-23.03, max=-22.91, mean=-22.97
+- longitude: min=-43.49, max=-43.16, mean=-43.24
+- bathrooms: min=0.00, max=3.50, mean=1.29
+- bedrooms: min=0.00, max=3.00, mean=1.32
+- beds: min=0.00, max=6.00, mean=1.97
+- minimum_nights: min=1.00, max=6.00, mean=2.28
+- maximum_nights: min=1.00, max=750.00, mean=214.47
+- number_of_reviews: min=0.00, max=66.00, mean=12.17
+- price: min=44.00, max=1170.00, mean=390.64
+- dist_to_cristo_km: min=0.73, max=29.50, mean=7.53
+- price_per_person: min=8.75, max=1080.00, mean=123.45
+- log_price: min=3.81, max=7.07, mean=5.80
+
+CATEGORICAL COLUMNS SUMMARY:
+- neighbourhood_cleansed: 57 unique values
+- room_type: 4 unique values
+- price_category: 6 unique values
+
+PRICE STATISTICS (BRL):
+Minimum price: R$ 44.00
+Maximum price: R$ 1170.00
+Average price: R$ 390.64
+Median price: R$ 320.00
+Standard deviation: R$ 233.46
+
+NEIGHBOURHOOD DISTRIBUTION:
+- Copacabana: 7514 listings
+- Barra da Tijuca: 1949 listings
+- Ipanema: 1712 listings
+- Recreio dos Bandeirantes: 1124 listings
+- Jacarepaguá: 1046 listings
+- Botafogo: 1040 listings
+- Centro: 1029 listings
+- Leblon: 911 listings
+- Santa Teresa: 857 listings
+- Flamengo: 562 listings
+
+ROOM TYPE DISTRIBUTION:
+- Entire home/apt: 17150 listings
+- Private room: 4667 listings
+- Shared room: 146 listings
+- Hotel room: 3 listings
