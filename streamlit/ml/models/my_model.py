@@ -191,7 +191,6 @@ class MyModel(Architecture):
         else:
             raise ValueError(f"Otimizador '{self.optimizer_name}' não suportado.")
 
-        # >>> Aqui a mágica:
         super().__init__(self.model, self.loss_fn, self.optimizer)
 
         print(f"✅ Modelo construído: {self.model}")
