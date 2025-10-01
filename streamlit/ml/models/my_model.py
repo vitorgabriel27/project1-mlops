@@ -179,17 +179,9 @@ class MyModel(Architecture):
         layers.append(nn.Linear(prev_dim, 1))  # saída
 
         self.model = nn.Sequential(*layers)
-        print(f"✅ Modelo construído: {self.model}")
-
-
-    def train_model(self, train_loader, val_loader, n_epochs=100):
-        if self.model is None:
-            raise ValueError("Modelo não foi construído. Chame build_model() primeiro.")
-
-        self.model.to(self.device)
         self.loss_fn = nn.MSELoss()
 
-        # Seleção do otimizador (usar AdamW por padrão)
+        # Otimizador
         if self.optimizer_name in ["adam", "adamw"]:
             self.optimizer = optim.AdamW(self.model.parameters(), lr=self.learning_rate)
         elif self.optimizer_name == "sgd":
@@ -199,103 +191,91 @@ class MyModel(Architecture):
         else:
             raise ValueError(f"Otimizador '{self.optimizer_name}' não suportado.")
 
-        # Scheduler (ReduceLROnPlateau)
+        # >>> Aqui a mágica:
+        super().__init__(self.model, self.loss_fn, self.optimizer)
+
+        print(f"✅ Modelo construído: {self.model}")
+
+
+
+    def train_model(self, train_loader, val_loader, n_epochs=100):
+        if self.model is None:
+            raise ValueError("Modelo não foi construído. Chame build_model() primeiro.")
+
+        # Preparar otimizador, loss e device
+        self.loss_fn = nn.MSELoss()
+        self.model.to(self.device)
+
+        # Seleção do otimizador
+        if self.optimizer_name in ["adam", "adamw"]:
+            self.optimizer = optim.AdamW(self.model.parameters(), lr=self.learning_rate)
+        elif self.optimizer_name == "sgd":
+            self.optimizer = optim.SGD(self.model.parameters(), lr=self.learning_rate)
+        elif self.optimizer_name == "rmsprop":
+            self.optimizer = optim.RMSprop(self.model.parameters(), lr=self.learning_rate)
+        else:
+            raise ValueError(f"Otimizador '{self.optimizer_name}' não suportado.")
+
+        # Scheduler
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer, mode="min", patience=5, factor=0.5, verbose=False
+            self.optimizer, mode="min", patience=5, factor=0.5, verbose=True
         )
 
-        train_losses = []
-        val_losses = []
+        # Configurar os data loaders na classe base
+        self.set_loaders(train_loader, val_loader)
 
         best_val_loss = float('inf')
-        # inicializa com o estado atual do modelo (cópia segura)
         best_model_state = {k: v.cpu().clone() for k, v in self.model.state_dict().items()}
-
         counter = 0
         stopped_early = False
 
-        # DEBUG: confirmar flag
         print(f"[train_model] enable_early_stopping={self.enable_early_stopping} patience={self.patience} min_delta={self.min_delta}")
 
         for epoch in range(n_epochs):
-            self.model.train()
-            total_train_loss = 0.0
+            print(f"Epoch {self.total_epochs + 1}/{self.total_epochs + (n_epochs - epoch)}")
+            self.total_epochs += 1
 
-            for X_batch, y_batch in train_loader:
-                X_batch = X_batch.to(self.device)
-                y_batch = y_batch.to(self.device)
-
-                self.optimizer.zero_grad()
-                outputs = self.model(X_batch)
-                loss = self.loss_fn(outputs, y_batch)
-                loss.backward()
-                self.optimizer.step()
-
-                total_train_loss += loss.item() * X_batch.size(0)
-
-            # média de treino (safe: evitar divisão por zero)
-            train_size = max(1, len(train_loader.dataset))
-            avg_train_loss = total_train_loss / train_size
-            train_losses.append(avg_train_loss)
-
-            # validação
-            self.model.eval()
-            total_val_loss = 0.0
+            # Uma época de treino + validação
+            self.losses.append(self._mini_batch(validation=False))
             with torch.no_grad():
-                for X_val, y_val in val_loader:
-                    X_val = X_val.to(self.device)
-                    y_val = y_val.to(self.device)
-                    val_outputs = self.model(X_val)
-                    val_loss = self.loss_fn(val_outputs, y_val)
-                    total_val_loss += val_loss.item() * X_val.size(0)
+                val_loss = self._mini_batch(validation=True)
+            self.val_losses.append(val_loss)
 
-            val_size = max(1, len(val_loader.dataset))
-            avg_val_loss = total_val_loss / val_size
-            val_losses.append(avg_val_loss)
+            # Step do scheduler
+            self.scheduler.step(val_loss)
 
-            # atualizar scheduler (segundo a validação)
-            try:
-                self.scheduler.step(avg_val_loss)
-            except Exception:
-                pass
+            print(f"🌱 Época {epoch + 1} - Train Loss: {self.losses[-1]:.6f} - Val Loss: {val_loss:.6f}")
 
-            print(f"🌱 Época {epoch+1}/{n_epochs} - Train Loss: {avg_train_loss:.6f} - Val Loss: {avg_val_loss:.6f}")
-
-            # Lógica de early stopping (usar self.patience sempre)
+            # Early stopping
             if self.enable_early_stopping:
-                if avg_val_loss + self.min_delta < best_val_loss:
-                    best_val_loss = avg_val_loss
+                if val_loss + self.min_delta < best_val_loss:
+                    best_val_loss = val_loss
                     counter = 0
-                    # salva cópia segura do state_dict (move para cpu e clone)
                     best_model_state = {k: v.cpu().clone() for k, v in self.model.state_dict().items()}
                 else:
                     counter += 1
                     print(f"[early_stopping] sem melhora por {counter}/{self.patience} épocas")
                     if counter >= self.patience:
-                        print(f"⏸ Early stopping na época {epoch+1}")
+                        print(f"⏸ Early stopping na época {epoch + 1}")
                         stopped_early = True
                         break
             else:
-                # early stopping desativado: mantém o último estado como 'melhor'
+                # Sem early stopping: sempre salva o último
                 best_model_state = {k: v.cpu().clone() for k, v in self.model.state_dict().items()}
 
-        # restaurar pesos (melhor ou último, dependendo de enable_early_stopping)
+        # Restaurar os melhores pesos
         self.model.load_state_dict(best_model_state)
 
-        # definir melhor época de forma consistente
         if self.enable_early_stopping and stopped_early:
-            # epoch atual é o índice da época em que parou (0-based), counter é número de épocas sem melhora
-            self.best_epoch = epoch - counter
+            self.best_epoch = self.total_epochs - counter - 1
         else:
-            self.best_epoch = epoch
+            self.best_epoch = self.total_epochs - 1
 
         return {
-            'train_loss': train_losses,
-            'val_loss': val_losses,
+            'train_loss': self.losses,
+            'val_loss': self.val_losses,
             'best_epoch': self.best_epoch
         }
-
-
 
     def evaluate(self, test_loader): 
         """Avaliar modelo com métricas reais: RMSE, MAE, R²""" 
@@ -310,28 +290,44 @@ class MyModel(Architecture):
                     X_batch = X_batch.to(self.device) 
                     y_batch = y_batch.to(self.device) 
                     outputs = self.model(X_batch) 
-                    # Desserializar (reverter normalização)
-                    outputs_denorm = outputs * self.y_std + self.y_mu
-                    y_batch_denorm = y_batch * self.y_std + self.y_mu 
+
+                    # Reverter normalização
+                    if self.normalization == "zscore":
+                        outputs_denorm = outputs * self.y_std + self.y_mu
+                        y_batch_denorm = y_batch * self.y_std + self.y_mu
+                    elif self.normalization == "minmax":
+                        outputs_denorm = outputs * (self.y_max - self.y_min + 1e-8) + self.y_min
+                        y_batch_denorm = y_batch * (self.y_max - self.y_min + 1e-8) + self.y_min
+                    else:
+                        outputs_denorm = outputs
+                        y_batch_denorm = y_batch
+
                     y_true.extend(y_batch_denorm.cpu().numpy().flatten()) 
                     y_pred.extend(outputs_denorm.cpu().numpy().flatten()) 
-                    # Calcular métricas 
-                    rmse = mean_squared_error(y_true, y_pred, squared=False) 
-                    mae = mean_absolute_error(y_true, y_pred) 
-                    r2 = r2_score(y_true, y_pred) 
-                    test_loss = mean_squared_error(y_true, y_pred) 
-                    # MSE 
-                    return { 
-                        'rmse': float(rmse), 
-                        'mae': float(mae), 
-                        'r2': float(r2), 
-                        'test_loss': float(test_loss), 
-                        'best_epoch': getattr(self, 'best_epoch', None) 
-                        # Evita erro se não definido 
-                    } 
+            
+            # Agora sim, calcular as métricas fora do loop
+            rmse = mean_squared_error(y_true, y_pred, squared=False) 
+            mae = mean_absolute_error(y_true, y_pred) 
+            r2 = r2_score(y_true, y_pred) 
+            test_loss = mean_squared_error(y_true, y_pred) 
+
+            return { 
+                'rmse': float(rmse), 
+                'mae': float(mae), 
+                'r2': float(r2), 
+                'test_loss': float(test_loss), 
+                'best_epoch': getattr(self, 'best_epoch', None) 
+            } 
         except Exception as e: 
             print(f"❌ Erro na avaliação: {e}") 
-            return {'rmse': 200.0, 'mae': 180.0, 'r2': 0.5, 'test_loss': 200.0, 'best_epoch': 0}
+            return {
+                'rmse': 200.0, 
+                'mae': 180.0, 
+                'r2': 0.5, 
+                'test_loss': 200.0, 
+                'best_epoch': 0
+            }
+
 
 
 
@@ -339,36 +335,61 @@ class MyModel(Architecture):
         """
         Faz previsões reais em um DataFrame usando um modelo treinado.
 
-        Parâmetros:
-            df: DataFrame de entrada com as features necessárias
-            model: modelo treinado (PyCaret, sklearn, ONNX, etc.)
-            preprocessor: (opcional) pipeline de pré-processamento se necessário
-
         Retorna:
             DataFrame com colunas: predicted_price, prediction_error, error_percentage
         """
         try:
             input_df = df.copy()
 
-            # Aplicar pré-processamento se houver
+            # === 1. Pré-processamento ===
+            numeric_features = ['accommodates', 'bathrooms', 'bedrooms', 'beds']
+            categorical_features = ['neighbourhood_cleansed', 'room_type']
+
+            # Preencher valores ausentes
+            for col in numeric_features:
+                if input_df[col].isnull().any():
+                    input_df[col] = input_df[col].fillna(input_df[col].median())
+            for col in categorical_features:
+                if input_df[col].isnull().any():
+                    input_df[col] = input_df[col].fillna(input_df[col].mode()[0] if not input_df[col].mode().empty else 'Unknown')
+
+            # Usar OneHotEncoder treinado
             if preprocessor is not None:
-                X = preprocessor.transform(input_df)
+                X_processed = preprocessor.transform(input_df)
+            elif hasattr(self, 'ohe'):
+                cat_encoded = self.ohe.transform(input_df[categorical_features])
+                X_numeric = input_df[numeric_features].values.astype(np.float32)
+                X_processed = np.concatenate([X_numeric, cat_encoded], axis=1)
             else:
-                X = input_df
+                raise ValueError("Nenhum pré-processador fornecido e self.ohe não está disponível.")
 
-            # Fazer predição
-            if hasattr(self.model, "predict"):
-                print('has predict')
-                predictions = self.model.predict(X)
+            # Converter para float32 (PyTorch requer isso)
+            X_processed = X_processed.astype(np.float32)
+
+            # Normalizar (se necessário)
+            if self.normalization == "zscore":
+                X_tensor = (torch.tensor(X_processed) - self.x_mu) / self.x_std
+            elif self.normalization == "minmax":
+                X_tensor = (torch.tensor(X_processed) - self.x_min) / (self.x_max - self.x_min + 1e-8)
             else:
-                raise ValueError("O modelo fornecido não possui método 'predict'.")
+                X_tensor = torch.tensor(X_processed)
 
-            # Resultado com previsões
-            result_df = df.copy()
-            result_df['predicted_price'] = predictions
+            # === 2. Fazer predição ===
+            self.model.eval()
+            with torch.no_grad():
+                preds = self.model(X_tensor.to(self.device)).cpu().numpy()
 
-            # Cálculo de erro (se coluna real estiver disponível)
-            if 'price' in df.columns:
+            # Desnormalizar a predição
+            if self.normalization == "zscore":
+                preds = preds * self.y_std.numpy() + self.y_mu.numpy()
+            elif self.normalization == "minmax":
+                preds = preds * (self.y_max.item() - self.y_min.item() + 1e-8) + self.y_min.item()
+
+            # === 3. Construir resultado ===
+            result_df = input_df.copy()
+            result_df['predicted_price'] = preds.flatten()
+
+            if 'price' in input_df.columns:
                 result_df['prediction_error'] = result_df['price'] - result_df['predicted_price']
                 result_df['error_percentage'] = (result_df['prediction_error'] / result_df['price']) * 100
             else:
@@ -384,3 +405,5 @@ class MyModel(Architecture):
             result_df['prediction_error'] = np.nan
             result_df['error_percentage'] = np.nan
             return result_df
+
+

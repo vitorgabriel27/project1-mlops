@@ -132,6 +132,7 @@ class Architecture(object):
         for epoch in range(n_epochs):
             # Keeps track of the numbers of epochs
             # by updating the corresponding attribute
+            print(f"Epoch {self.total_epochs+1}/{self.total_epochs+n_epochs}")
             self.total_epochs += 1
 
             # inner loop
